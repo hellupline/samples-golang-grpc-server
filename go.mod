@@ -10,5 +10,6 @@ require (
 	github.com/jhump/protoreflect v1.6.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.2.2
+	go.etcd.io/bbolt v1.3.3
 	google.golang.org/grpc v1.26.0
 )
