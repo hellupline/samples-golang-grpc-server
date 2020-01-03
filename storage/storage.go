@@ -1,4 +1,4 @@
-package datastore
+package storage
 
 import (
 	"bytes"
@@ -10,32 +10,32 @@ import (
 type Unmarshaler func(data []byte) error
 type Marshaler func() ([]byte, error)
 
-type DataStore struct {
+type Storage struct {
 	db *bbolt.DB
 }
 
-func New(db *bbolt.DB) *DataStore {
-	return &DataStore{db}
+func New(db *bbolt.DB) *Storage {
+	return &Storage{db}
 }
 
-func (d *DataStore) Scan(namespace, prefix string, unmarshal Unmarshaler) error {
-	return d.objectScan(namespace, prefix, unmarshal)
+func (s *Storage) Scan(namespace, prefix string, unmarshal Unmarshaler) error {
+	return s.objectScan(namespace, prefix, unmarshal)
 }
 
-func (d *DataStore) Get(namespace, key string, unmarshal Unmarshaler) error {
-	return d.objectGet(namespace, key, unmarshal)
+func (s *Storage) Get(namespace, key string, unmarshal Unmarshaler) error {
+	return s.objectGet(namespace, key, unmarshal)
 }
 
-func (d *DataStore) Put(namespace, key string, marshal Marshaler) error {
-	return d.objectPut(namespace, key, marshal)
+func (s *Storage) Put(namespace, key string, marshal Marshaler) error {
+	return s.objectPut(namespace, key, marshal)
 }
 
-func (d *DataStore) Delete(namespace, key string) error {
-	return d.objectDelete(namespace, key)
+func (s *Storage) Delete(namespace, key string) error {
+	return s.objectDelete(namespace, key)
 }
 
-func (d *DataStore) objectScan(namespace, prefix string, unmarshal Unmarshaler) error {
-	return d.db.View(func(tx *bbolt.Tx) error {
+func (s *Storage) objectScan(namespace, prefix string, unmarshal Unmarshaler) error {
+	return s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(namespace))
 		if b == nil {
 			return fmt.Errorf("bucket %s does not exists", namespace)
@@ -51,8 +51,8 @@ func (d *DataStore) objectScan(namespace, prefix string, unmarshal Unmarshaler) 
 	})
 }
 
-func (d *DataStore) objectGet(namespace, key string, unmarshal Unmarshaler) error {
-	return d.db.View(func(tx *bbolt.Tx) error {
+func (s *Storage) objectGet(namespace, key string, unmarshal Unmarshaler) error {
+	return s.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(namespace))
 		if b == nil {
 			return fmt.Errorf("bucket %s does not exists", namespace)
@@ -68,8 +68,8 @@ func (d *DataStore) objectGet(namespace, key string, unmarshal Unmarshaler) erro
 	})
 }
 
-func (d *DataStore) objectPut(namespace, key string, marshal Marshaler) error {
-	return d.db.Update(func(tx *bbolt.Tx) error {
+func (s *Storage) objectPut(namespace, key string, marshal Marshaler) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(namespace))
 		if err != nil {
 			return fmt.Errorf("failed to create bucket %s: %w", namespace, err)
@@ -85,8 +85,8 @@ func (d *DataStore) objectPut(namespace, key string, marshal Marshaler) error {
 	})
 }
 
-func (d *DataStore) objectDelete(namespace, key string) error {
-	return d.db.Update(func(tx *bbolt.Tx) error {
+func (s *Storage) objectDelete(namespace, key string) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(namespace))
 		if b == nil {
 			return fmt.Errorf("bucket %s does not exists", namespace)
