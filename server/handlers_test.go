@@ -12,7 +12,7 @@ import (
 
 func TestGatewayHandlers(t *testing.T) {
 	const value = "hello"
-	s := httptest.NewServer(gatewayHandler(nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	s := httptest.NewServer(gatewayHandler(nil, nil, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, value)
 	})))
 	defer s.Close()

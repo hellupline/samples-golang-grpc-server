@@ -25,7 +25,7 @@ func TestServerClose(t *testing.T) {
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, value)
 	})
-	s := New("localhost:50001", "localhost:8080", nil, f)
+	s := New("localhost:50001", "localhost:8080", nil, nil, f)
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestServerClose(t *testing.T) {
 }
 
 func TestServerGrpc(t *testing.T) {
-	s := New("localhost:50001", "localhost:8080", nil, nil)
+	s := New("localhost:50001", "localhost:8080", nil, nil, nil)
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestServerHttp(t *testing.T) {
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, value)
 	})
-	s := New("localhost:50001", "localhost:8080", nil, f)
+	s := New("localhost:50001", "localhost:8080", nil, nil, f)
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}

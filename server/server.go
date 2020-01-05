@@ -32,7 +32,7 @@ type Server struct {
 	tlsconfig  *tls.Config
 }
 
-func New(grpcAddr, httpAddr string, tlsconfig *tls.Config, next http.Handler) *Server {
+func New(grpcAddr, httpAddr string, tlsconfig *tls.Config, openapiData []byte, next http.Handler) *Server {
 	grpcopt := []grpc.ServerOption{}
 	if tlsconfig != nil {
 		grpcopt = append(grpcopt, grpc.Creds(credentials.NewTLS(tlsconfig)))
@@ -41,7 +41,7 @@ func New(grpcAddr, httpAddr string, tlsconfig *tls.Config, next http.Handler) *S
 		runtime.WithProtoErrorHandler(runtime.DefaultHTTPProtoErrorHandler),
 	}
 	mux := runtime.NewServeMux(muxopt...)
-	handler := gatewayHandler(mux, next)
+	handler := gatewayHandler(mux, openapiData, next)
 
 	grpcServer := grpc.NewServer(grpcopt...)
 	httpServer := &http.Server{TLSConfig: tlsconfig, Handler: handler}
