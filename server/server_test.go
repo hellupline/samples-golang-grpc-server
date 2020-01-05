@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/fullstorydev/grpcurl"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -28,7 +29,8 @@ func TestServerClose(t *testing.T) {
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.StartHttpServer(); err != nil {
+	httpF := func(context.Context, *runtime.ServeMux, *grpc.ClientConn) error { return nil }
+	if err := s.StartHttpServer(httpF); err != nil {
 		t.Fatal(err)
 	}
 	s.Close()
@@ -49,7 +51,8 @@ func TestServerGrpc(t *testing.T) {
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.StartHttpServer(); err != nil {
+	httpF := func(context.Context, *runtime.ServeMux, *grpc.ClientConn) error { return nil }
+	if err := s.StartHttpServer(httpF); err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
@@ -70,7 +73,8 @@ func TestServerHttp(t *testing.T) {
 	if err := s.StartGrpcServer(func(*grpc.Server) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.StartHttpServer(); err != nil {
+	httpF := func(context.Context, *runtime.ServeMux, *grpc.ClientConn) error { return nil }
+	if err := s.StartHttpServer(httpF); err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()

@@ -20,7 +20,11 @@ import (
 
 var logger = logrus.WithField("module", "server")
 
+type grpcRegister func(*grpc.Server) error
+type httpRegister func(context.Context, *runtime.ServeMux, *grpc.ClientConn) error
+
 type Server struct {
+	mux        *runtime.ServeMux
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	grpcAddr   string
@@ -36,12 +40,13 @@ func New(grpcAddr, httpAddr string, tlsconfig *tls.Config, next http.Handler) *S
 	muxopt := []runtime.ServeMuxOption{
 		runtime.WithProtoErrorHandler(runtime.DefaultHTTPProtoErrorHandler),
 	}
-	handler := gatewayHandler(runtime.NewServeMux(muxopt...), next)
+	mux := runtime.NewServeMux(muxopt...)
+	handler := gatewayHandler(mux, next)
 
 	grpcServer := grpc.NewServer(grpcopt...)
 	httpServer := &http.Server{TLSConfig: tlsconfig, Handler: handler}
 
-	return &Server{grpcServer, httpServer, grpcAddr, httpAddr, tlsconfig}
+	return &Server{mux, grpcServer, httpServer, grpcAddr, httpAddr, tlsconfig}
 }
 
 func (s *Server) Close() {
@@ -53,7 +58,7 @@ func (s *Server) Close() {
 	s.grpcServer.GracefulStop()
 }
 
-func (s *Server) StartGrpcServer(register func(*grpc.Server) error) error {
+func (s *Server) StartGrpcServer(register grpcRegister) error {
 	if err := register(s.grpcServer); err != nil {
 		return err
 	}
@@ -72,18 +77,20 @@ func (s *Server) StartGrpcServer(register func(*grpc.Server) error) error {
 	return nil
 }
 
-func (s *Server) StartHttpServer() error {
+func (s *Server) StartHttpServer(register httpRegister) error {
 	cctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	o := grpc.WithInsecure()
 	if s.tlsconfig != nil {
 		o = grpc.WithTransportCredentials(credentials.NewTLS(s.tlsconfig))
 	}
-	_, err := grpc.DialContext(cctx, s.grpcAddr, o, grpc.WithBlock())
+	conn, err := grpc.DialContext(cctx, s.grpcAddr, o, grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("failed to dial grpc server: %w", err)
 	}
-
+	if err := register(cctx, s.mux, conn); err != nil {
+		return err
+	}
 	lis, err := net.Listen("tcp", s.httpAddr)
 	if err != nil {
 		return fmt.Errorf("error listening on address %s: %w", s.httpAddr, err)
